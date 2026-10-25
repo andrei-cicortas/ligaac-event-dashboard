@@ -168,12 +168,20 @@ function renderEvent(event) {
 
 function startCountdown() {
   clearInterval(countdownInterval);
-  const el = document.getElementById('countdown');
+  // One sr-only live region with the full sentence (for assistive tech),
+  // plus four decorative number boxes (aria-hidden) that only sighted users see.
+  const liveEl = document.getElementById('countdown');
+  const daysEl = document.getElementById('cd-days');
+  const hoursEl = document.getElementById('cd-hours');
+  const minEl = document.getElementById('cd-min');
+  const secEl = document.getElementById('cd-sec');
+  const pad = (n) => String(n).padStart(2, '0');
 
   function tick() {
     const diffMs = eventDate.getTime() - Date.now();
     if (diffMs <= 0) {
-      el.textContent = 'Evenimentul a început!';
+      liveEl.textContent = 'Evenimentul a început!';
+      daysEl.textContent = hoursEl.textContent = minEl.textContent = secEl.textContent = '00';
       clearInterval(countdownInterval);
       return;
     }
@@ -182,7 +190,11 @@ function startCountdown() {
     const hours = Math.floor((totalSeconds % 86400) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    el.textContent = `${days}z ${hours}h ${minutes}m ${seconds}s`;
+    daysEl.textContent = pad(days);
+    hoursEl.textContent = pad(hours);
+    minEl.textContent = pad(minutes);
+    secEl.textContent = pad(seconds);
+    liveEl.textContent = `${days}z ${hours}h ${minutes}m ${seconds}s`;
   }
 
   tick();
@@ -222,6 +234,25 @@ document.getElementById('edit-event-form').addEventListener('submit', async (e) 
 });
 
 // ---------- Participants section ----------
+function initials(name) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function avatarColor(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue} 60% 42%)`;
+}
+
+const EDIT_ICON =
+  '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3Z"/></svg>';
+const TRASH_ICON =
+  '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>';
+
 function renderParticipants(list) {
   document.getElementById('participant-count').textContent = list.length;
   const tbody = document.getElementById('participants-body');
@@ -238,10 +269,15 @@ function renderParticipants(list) {
   for (const p of list) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${escapeHtml(p.name)}</td>
+      <td>
+        <div class="participant-cell">
+          <span class="avatar" style="background:${avatarColor(p.name)}">${escapeHtml(initials(p.name))}</span>
+          <span>${escapeHtml(p.name)}</span>
+        </div>
+      </td>
       <td>${escapeHtml(p.email)}</td>
-      <td>${escapeHtml(p.team || '—')}</td>
-      <td>${escapeHtml(p.role || '—')}</td>
+      <td>${p.team ? `<span class="chip">${escapeHtml(p.team)}</span>` : '—'}</td>
+      <td>${p.role ? `<span class="badge-role" data-role="${escapeHtml(p.role)}">${escapeHtml(p.role)}</span>` : '—'}</td>
     `;
 
     const actionsTd = document.createElement('td');
@@ -250,12 +286,16 @@ function renderParticipants(list) {
 
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
-    editBtn.textContent = 'Editează';
+    editBtn.className = 'icon-btn';
+    editBtn.setAttribute('aria-label', `Editează participantul ${p.name}`);
+    editBtn.innerHTML = EDIT_ICON;
     editBtn.addEventListener('click', () => openEditParticipant(p));
 
     const delBtn = document.createElement('button');
     delBtn.type = 'button';
-    delBtn.textContent = 'Șterge';
+    delBtn.className = 'icon-btn danger';
+    delBtn.setAttribute('aria-label', `Șterge participantul ${p.name}`);
+    delBtn.innerHTML = TRASH_ICON;
     delBtn.addEventListener('click', () =>
       confirmDelete(`Ștergi participantul ${p.name}?`, () => deleteParticipant(p.id))
     );
@@ -324,6 +364,20 @@ async function deleteParticipant(id) {
 }
 
 // ---------- Announcements section ----------
+const MEGAPHONE_ICON =
+  '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11v2a2 2 0 0 0 2 2h1l10 4V5L6 9H5a2 2 0 0 0-2 2Z"/><path d="M16 9.5a3 3 0 0 1 0 5"/></svg>';
+
+function relativeTime(dateStr) {
+  const diffMin = Math.round((Date.now() - new Date(dateStr).getTime()) / 60000);
+  if (diffMin < 1) return 'chiar acum';
+  if (diffMin < 60) return `acum ${diffMin} min`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `acum ${diffH} h`;
+  const diffD = Math.round(diffH / 24);
+  if (diffD < 7) return `acum ${diffD} zile`;
+  return new Date(dateStr).toLocaleDateString('ro-RO');
+}
+
 function renderAnnouncements(list) {
   const ul = document.getElementById('announcements-list');
   ul.innerHTML = '';
@@ -340,25 +394,34 @@ function renderAnnouncements(list) {
     const li = document.createElement('li');
     const article = document.createElement('article');
 
+    const head = document.createElement('div');
+    head.className = 'announcement-head';
+    const icon = document.createElement('span');
+    icon.className = 'announcement-icon';
+    icon.innerHTML = MEGAPHONE_ICON;
     const h3 = document.createElement('h3');
     h3.textContent = a.title;
+    head.append(icon, h3);
+
+    const small = document.createElement('small');
+    small.textContent = relativeTime(a.updatedAt);
+    small.title = new Date(a.updatedAt).toLocaleString('ro-RO');
 
     const p = document.createElement('p');
     p.textContent = a.content;
 
-    const small = document.createElement('small');
-    small.textContent = new Date(a.updatedAt).toLocaleString('ro-RO');
-
-    article.append(h3, small, p);
+    article.append(head, small, p);
 
     if (organizerKey) {
       const editBtn = document.createElement('button');
       editBtn.type = 'button';
+      editBtn.className = 'btn-ghost';
       editBtn.textContent = 'Editează';
       editBtn.addEventListener('click', () => openEditAnnouncement(a));
 
       const delBtn = document.createElement('button');
       delBtn.type = 'button';
+      delBtn.className = 'danger';
       delBtn.textContent = 'Șterge';
       delBtn.addEventListener('click', () =>
         confirmDelete(`Ștergi anunțul "${a.title}"?`, () => deleteAnnouncement(a.id))
