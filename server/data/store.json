@@ -1,0 +1,43 @@
+{
+  "event": {
+    "name": "LigaAC LAN Party 2026",
+    "date": "2026-11-15T18:00:00+02:00",
+    "location": "Corp AC, Sala PR2, Str. Baicului 2, București",
+    "description": "O noapte întreagă de gaming, pizza și proiecte pe care nu le-am terminat niciodată. Vino cu laptopul, bună dispoziție și idei de task-uri pentru Departamentul Tehnic."
+  },
+  "participants": [
+    {
+      "id": "p1",
+      "name": "Ana Pop",
+      "email": "ana.pop@example.com",
+      "team": "Squad Rocket",
+      "role": "Jucător",
+      "registeredAt": "2026-10-20T10:00:00+03:00"
+    },
+    {
+      "id": "p2",
+      "name": "Mihai Ionescu",
+      "email": "mihai.ionescu@example.com",
+      "team": "",
+      "role": "Voluntar",
+      "registeredAt": "2026-10-21T09:30:00+03:00"
+    },
+    {
+      "id": "ca731bcd-000a-4810-a4c2-ff4c21fa9f5c",
+      "name": "Andrei",
+      "email": "cicortasandrei11@gmail.com",
+      "team": "",
+      "role": "Spectator",
+      "registeredAt": "2026-10-25T13:45:46.799Z"
+    }
+  ],
+  "announcements": [
+    {
+      "id": "a1",
+      "title": "Bun venit!",
+      "content": "Înscrierile sunt deschise. Nu uitați laptopul și încărcătorul!",
+      "createdAt": "2026-10-18T12:00:00+03:00",
+      "updatedAt": "2026-10-18T12:00:00+03:00"
+    }
+  ]
+}

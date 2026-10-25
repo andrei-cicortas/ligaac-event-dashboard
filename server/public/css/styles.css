@@ -1,0 +1,238 @@
+:root {
+  --color-primary: #b9222b;
+  --color-primary-dark: #8d1a21;
+  --color-bg: #f7f5f3;
+  --color-surface: #ffffff;
+  --color-text: #221d1d;
+  --color-muted: #6b6b6b;
+  --color-border: #e7e2e0;
+  --radius: 10px;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+header {
+  background: linear-gradient(120deg, var(--color-primary), var(--color-primary-dark));
+  color: #fff;
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+nav {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+nav button {
+  background: #fff;
+  color: var(--color-primary-dark);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+main {
+  max-width: 960px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  display: grid;
+  gap: 2rem;
+}
+
+section {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+section h2 {
+  margin-top: 0;
+  color: var(--color-primary-dark);
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+  margin: 1rem 0;
+}
+
+dt {
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+dd {
+  margin: 0;
+}
+
+form {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  max-width: 420px;
+}
+
+label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+input,
+select,
+textarea {
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font: inherit;
+  width: 100%;
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+button {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  justify-self: start;
+}
+
+button:hover {
+  background: var(--color-primary-dark);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+th {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+td button {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  margin-right: 0.4rem;
+}
+
+#announcements-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+#announcements-list article {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+#announcements-list h3 {
+  margin: 0 0 0.25rem;
+}
+
+#announcements-list small {
+  color: var(--color-muted);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+#announcements-list button {
+  margin-top: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+/* Dialogs are positioned entirely via JS (see centerElement in app.js) so the
+   browser's default `margin: auto` centering must not fight that placement. */
+dialog {
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  margin: 0;
+  inset: auto;
+  max-width: min(90vw, 420px);
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+#toast {
+  position: fixed;
+  background: var(--color-text);
+  color: #fff;
+  padding: 0.75rem 1.25rem;
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  z-index: 999;
+}
+
+#toast.toast-error {
+  background: var(--color-primary);
+}
+
+footer {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-muted);
+}
+
+.organizer-only[hidden] {
+  display: none;
+}

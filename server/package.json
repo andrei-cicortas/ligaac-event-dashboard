@@ -1,0 +1,17 @@
+{
+  "name": "ligaac-event-dashboard",
+  "version": "1.0.0",
+  "description": "Dashboard pentru un eveniment Liga AC - proba Departament Tehnic 2026",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

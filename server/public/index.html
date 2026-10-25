@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LigaAC Event Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header>
+    <h1 id="event-name">Se încarcă...</h1>
+    <nav>
+      <a href="#info">Eveniment</a>
+      <a href="#participants">Participanți</a>
+      <a href="#announcements">Anunțuri</a>
+      <button id="organizer-toggle" type="button">Login organizator</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="info" aria-labelledby="info-heading">
+      <h2 id="info-heading">Despre eveniment</h2>
+      <p id="event-description">—</p>
+      <dl>
+        <dt>Data</dt>
+        <dd><time id="event-date"></time></dd>
+        <dt>Locație</dt>
+        <dd id="event-location"></dd>
+        <dt>Participanți înscriși</dt>
+        <dd><span id="participant-count">0</span></dd>
+      </dl>
+      <p>Countdown: <strong><time id="countdown" aria-live="polite">—</time></strong></p>
+      <button id="edit-event-btn" type="button" class="organizer-only" hidden>Editează evenimentul</button>
+    </section>
+
+    <section id="participants" aria-labelledby="participants-heading">
+      <h2 id="participants-heading">Participanți</h2>
+      <form id="register-form">
+        <label for="reg-name">Nume</label>
+        <input id="reg-name" name="name" type="text" required />
+
+        <label for="reg-email">Email</label>
+        <input id="reg-email" name="email" type="email" required />
+
+        <label for="reg-team">Echipă (opțional)</label>
+        <input id="reg-team" name="team" type="text" />
+
+        <label for="reg-role">Rol (opțional)</label>
+        <select id="reg-role" name="role">
+          <option value="">Alege un rol</option>
+          <option value="Jucător">Jucător</option>
+          <option value="Voluntar">Voluntar</option>
+          <option value="Spectator">Spectator</option>
+        </select>
+
+        <button type="submit">Înscrie-te</button>
+      </form>
+
+      <table id="participants-table">
+        <thead>
+          <tr>
+            <th scope="col">Nume</th>
+            <th scope="col">Email</th>
+            <th scope="col">Echipă</th>
+            <th scope="col">Rol</th>
+            <th scope="col" class="organizer-only" hidden>Acțiuni</th>
+          </tr>
+        </thead>
+        <tbody id="participants-body"></tbody>
+      </table>
+    </section>
+
+    <section id="announcements" aria-labelledby="announcements-heading">
+      <h2 id="announcements-heading">Anunțuri</h2>
+      <form id="announcement-form" class="organizer-only" hidden>
+        <label for="ann-title">Titlu</label>
+        <input id="ann-title" name="title" type="text" required />
+
+        <label for="ann-content">Conținut</label>
+        <textarea id="ann-content" name="content" required></textarea>
+
+        <button type="submit">Publică anunț</button>
+      </form>
+      <ul id="announcements-list"></ul>
+    </section>
+  </main>
+
+  <dialog id="organizer-dialog">
+    <form id="organizer-form">
+      <h2>Login organizator</h2>
+      <label for="organizer-key">Cheie organizator</label>
+      <input id="organizer-key" type="password" required />
+      <button type="submit">Intră</button>
+      <button type="button" data-close="organizer-dialog">Anulează</button>
+    </form>
+  </dialog>
+
+  <dialog id="edit-event-dialog">
+    <form id="edit-event-form">
+      <h2>Editează evenimentul</h2>
+      <label for="edit-event-name">Nume</label>
+      <input id="edit-event-name" type="text" required />
+
+      <label for="edit-event-date">Dată și oră</label>
+      <input id="edit-event-date" type="datetime-local" required />
+
+      <label for="edit-event-location">Locație</label>
+      <input id="edit-event-location" type="text" required />
+
+      <label for="edit-event-description">Descriere</label>
+      <textarea id="edit-event-description" required></textarea>
+
+      <button type="submit">Salvează</button>
+      <button type="button" data-close="edit-event-dialog">Anulează</button>
+    </form>
+  </dialog>
+
+  <dialog id="edit-participant-dialog">
+    <form id="edit-participant-form">
+      <h2>Editează participant</h2>
+      <input type="hidden" id="edit-participant-id" />
+
+      <label for="edit-participant-name">Nume</label>
+      <input id="edit-participant-name" type="text" required />
+
+      <label for="edit-participant-email">Email</label>
+      <input id="edit-participant-email" type="email" required />
+
+      <label for="edit-participant-team">Echipă</label>
+      <input id="edit-participant-team" type="text" />
+
+      <label for="edit-participant-role">Rol</label>
+      <input id="edit-participant-role" type="text" />
+
+      <button type="submit">Salvează</button>
+      <button type="button" data-close="edit-participant-dialog">Anulează</button>
+    </form>
+  </dialog>
+
+  <dialog id="edit-announcement-dialog">
+    <form id="edit-announcement-form">
+      <h2>Editează anunț</h2>
+      <input type="hidden" id="edit-announcement-id" />
+
+      <label for="edit-announcement-title">Titlu</label>
+      <input id="edit-announcement-title" type="text" required />
+
+      <label for="edit-announcement-content">Conținut</label>
+      <textarea id="edit-announcement-content" required></textarea>
+
+      <button type="submit">Salvează</button>
+      <button type="button" data-close="edit-announcement-dialog">Anulează</button>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-dialog">
+    <p id="confirm-message">Ești sigur?</p>
+    <button id="confirm-yes" type="button">Da, șterge</button>
+    <button id="confirm-no" type="button" data-close="confirm-dialog">Anulează</button>
+  </dialog>
+
+  <aside id="toast" role="status" aria-live="polite" hidden></aside>
+
+  <footer>
+    <small>Construit pentru proba Departamentul Tehnic — Liga AC, 2026.</small>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
