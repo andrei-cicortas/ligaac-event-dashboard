@@ -7,17 +7,28 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Treci la conținut</a>
+
   <header>
     <h1 id="event-name">Se încarcă...</h1>
     <nav>
       <a href="#info">Eveniment</a>
       <a href="#participants">Participanți</a>
       <a href="#announcements">Anunțuri</a>
+      <button id="theme-toggle" type="button" aria-label="Comută tema închisă/deschisă">
+        <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke-linecap="round"/></svg>
+        <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
+      </button>
       <button id="organizer-toggle" type="button">Login organizator</button>
     </nav>
   </header>
 
-  <main>
+  <main id="main-content" tabindex="-1">
+    <div id="load-error" class="banner banner-error" role="alert" hidden>
+      <p>Nu am putut încărca datele evenimentului. Verifică conexiunea și încearcă din nou.</p>
+      <button id="retry-load-btn" type="button">Reîncearcă</button>
+    </div>
+
     <section id="info" aria-labelledby="info-heading">
       <h2 id="info-heading">Despre eveniment</h2>
       <p id="event-description">—</p>
@@ -56,18 +67,24 @@
         <button type="submit">Înscrie-te</button>
       </form>
 
-      <table id="participants-table">
-        <thead>
-          <tr>
-            <th scope="col">Nume</th>
-            <th scope="col">Email</th>
-            <th scope="col">Echipă</th>
-            <th scope="col">Rol</th>
-            <th scope="col" class="organizer-only" hidden>Acțiuni</th>
-          </tr>
-        </thead>
-        <tbody id="participants-body"></tbody>
-      </table>
+      <div class="table-scroll">
+        <table id="participants-table">
+          <thead>
+            <tr>
+              <th scope="col">Nume</th>
+              <th scope="col">Email</th>
+              <th scope="col">Echipă</th>
+              <th scope="col">Rol</th>
+              <th scope="col" class="organizer-only" hidden>Acțiuni</th>
+            </tr>
+          </thead>
+          <tbody id="participants-body">
+            <tr class="state-row">
+              <td colspan="5">Se încarcă participanții…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section id="announcements" aria-labelledby="announcements-heading">
@@ -81,13 +98,15 @@
 
         <button type="submit">Publică anunț</button>
       </form>
-      <ul id="announcements-list"></ul>
+      <ul id="announcements-list">
+        <li class="state-row">Se încarcă anunțurile…</li>
+      </ul>
     </section>
   </main>
 
-  <dialog id="organizer-dialog">
+  <dialog id="organizer-dialog" aria-labelledby="organizer-dialog-title">
     <form id="organizer-form">
-      <h2>Login organizator</h2>
+      <h2 id="organizer-dialog-title">Login organizator</h2>
       <label for="organizer-key">Cheie organizator</label>
       <input id="organizer-key" type="password" required />
       <button type="submit">Intră</button>
@@ -95,9 +114,9 @@
     </form>
   </dialog>
 
-  <dialog id="edit-event-dialog">
+  <dialog id="edit-event-dialog" aria-labelledby="edit-event-dialog-title">
     <form id="edit-event-form">
-      <h2>Editează evenimentul</h2>
+      <h2 id="edit-event-dialog-title">Editează evenimentul</h2>
       <label for="edit-event-name">Nume</label>
       <input id="edit-event-name" type="text" required />
 
@@ -115,9 +134,9 @@
     </form>
   </dialog>
 
-  <dialog id="edit-participant-dialog">
+  <dialog id="edit-participant-dialog" aria-labelledby="edit-participant-dialog-title">
     <form id="edit-participant-form">
-      <h2>Editează participant</h2>
+      <h2 id="edit-participant-dialog-title">Editează participant</h2>
       <input type="hidden" id="edit-participant-id" />
 
       <label for="edit-participant-name">Nume</label>
@@ -137,9 +156,9 @@
     </form>
   </dialog>
 
-  <dialog id="edit-announcement-dialog">
+  <dialog id="edit-announcement-dialog" aria-labelledby="edit-announcement-dialog-title">
     <form id="edit-announcement-form">
-      <h2>Editează anunț</h2>
+      <h2 id="edit-announcement-dialog-title">Editează anunț</h2>
       <input type="hidden" id="edit-announcement-id" />
 
       <label for="edit-announcement-title">Titlu</label>
@@ -153,9 +172,9 @@
     </form>
   </dialog>
 
-  <dialog id="confirm-dialog">
+  <dialog id="confirm-dialog" aria-labelledby="confirm-message">
     <p id="confirm-message">Ești sigur?</p>
-    <button id="confirm-yes" type="button">Da, șterge</button>
+    <button id="confirm-yes" type="button" class="danger">Da, șterge</button>
     <button id="confirm-no" type="button" data-close="confirm-dialog">Anulează</button>
   </dialog>
 

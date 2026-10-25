@@ -1,8 +1,31 @@
 const ORGANIZER_KEY_STORAGE = 'ligaac_organizer_key';
+const THEME_STORAGE = 'ligaac_theme';
 let organizerKey = sessionStorage.getItem(ORGANIZER_KEY_STORAGE) || null;
 let eventDate = null;
 let countdownInterval = null;
 let pendingConfirmAction = null;
+
+// ---------- Theme ----------
+function prefersDark() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function applyTheme(theme) {
+  if (theme === 'light' || theme === 'dark') {
+    document.documentElement.dataset.theme = theme;
+  } else {
+    delete document.documentElement.dataset.theme;
+  }
+}
+
+applyTheme(localStorage.getItem(THEME_STORAGE));
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const current = document.documentElement.dataset.theme || (prefersDark() ? 'dark' : 'light');
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem(THEME_STORAGE, next);
+});
 
 // ---------- API helper ----------
 async function api(path, options = {}) {
@@ -45,12 +68,60 @@ function centerToast(toast) {
 }
 
 function openDialog(dialog) {
+  const opener = document.activeElement;
+
   if (typeof dialog.showModal === 'function') {
     dialog.showModal();
   } else {
+    // Fallback for browsers without <dialog> support: showModal() (and its
+    // built-in focus trap + Escape handling) isn't available, so provide a
+    // minimal manual trap instead.
     dialog.setAttribute('open', '');
+    trapFocus(dialog);
   }
+
   requestAnimationFrame(() => centerElement(dialog));
+
+  dialog.addEventListener(
+    'close',
+    () => {
+      if (opener && typeof opener.focus === 'function' && document.contains(opener)) {
+        opener.focus();
+      }
+    },
+    { once: true }
+  );
+}
+
+function trapFocus(dialog) {
+  const focusable = dialog.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  );
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  first.focus();
+
+  function handleKeydown(e) {
+    if (e.key === 'Escape') {
+      dialog.close();
+    } else if (e.key === 'Tab') {
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  }
+
+  dialog.addEventListener('keydown', handleKeydown);
+  dialog.addEventListener(
+    'close',
+    () => dialog.removeEventListener('keydown', handleKeydown),
+    { once: true }
+  );
 }
 
 window.addEventListener('resize', () => {
@@ -60,15 +131,23 @@ window.addEventListener('resize', () => {
 });
 
 let toastTimer = null;
+let toastHideTimer = null;
 function showToast(message, isError = false) {
   const toast = document.getElementById('toast');
+  clearTimeout(toastTimer);
+  clearTimeout(toastHideTimer);
+
   toast.textContent = message;
   toast.hidden = false;
   toast.classList.toggle('toast-error', isError);
   centerToast(toast);
-  clearTimeout(toastTimer);
+  requestAnimationFrame(() => toast.classList.add('is-visible'));
+
   toastTimer = setTimeout(() => {
-    toast.hidden = true;
+    toast.classList.remove('is-visible');
+    toastHideTimer = setTimeout(() => {
+      toast.hidden = true;
+    }, 220);
   }, 4000);
 }
 
@@ -147,6 +226,14 @@ function renderParticipants(list) {
   document.getElementById('participant-count').textContent = list.length;
   const tbody = document.getElementById('participants-body');
   tbody.innerHTML = '';
+
+  if (list.length === 0) {
+    const tr = document.createElement('tr');
+    tr.className = 'state-row';
+    tr.innerHTML = '<td colspan="5">Niciun participant înscris încă.</td>';
+    tbody.appendChild(tr);
+    return;
+  }
 
   for (const p of list) {
     const tr = document.createElement('tr');
@@ -240,6 +327,14 @@ async function deleteParticipant(id) {
 function renderAnnouncements(list) {
   const ul = document.getElementById('announcements-list');
   ul.innerHTML = '';
+
+  if (list.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'state-row';
+    li.textContent = 'Niciun anunț publicat momentan.';
+    ul.appendChild(li);
+    return;
+  }
 
   for (const a of list) {
     const li = document.createElement('li');
@@ -393,7 +488,13 @@ document.getElementById('organizer-form').addEventListener('submit', async (e) =
 });
 
 // ---------- Init ----------
+document.getElementById('retry-load-btn').addEventListener('click', () => loadAll());
+
 async function loadAll() {
+  const errorBanner = document.getElementById('load-error');
+  errorBanner.hidden = true;
+  document.body.classList.add('is-loading');
+
   try {
     const [event, participants, announcements] = await Promise.all([
       api('/event'),
@@ -404,7 +505,10 @@ async function loadAll() {
     renderParticipants(participants);
     renderAnnouncements(announcements);
   } catch (err) {
+    errorBanner.hidden = false;
     showToast(err.message, true);
+  } finally {
+    document.body.classList.remove('is-loading');
   }
 }
 
