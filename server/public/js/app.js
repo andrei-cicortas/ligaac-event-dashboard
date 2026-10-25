@@ -248,11 +248,6 @@ function avatarColor(name) {
   return `hsl(${hue} 60% 42%)`;
 }
 
-const EDIT_ICON =
-  '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3Z"/></svg>';
-const TRASH_ICON =
-  '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>';
-
 function renderParticipants(list) {
   document.getElementById('participant-count').textContent = list.length;
   const tbody = document.getElementById('participants-body');
@@ -286,16 +281,16 @@ function renderParticipants(list) {
 
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
-    editBtn.className = 'icon-btn';
+    editBtn.className = 'text-btn';
+    editBtn.textContent = 'edit';
     editBtn.setAttribute('aria-label', `Editează participantul ${p.name}`);
-    editBtn.innerHTML = EDIT_ICON;
     editBtn.addEventListener('click', () => openEditParticipant(p));
 
     const delBtn = document.createElement('button');
     delBtn.type = 'button';
-    delBtn.className = 'icon-btn danger';
+    delBtn.className = 'text-btn danger';
+    delBtn.textContent = 'del';
     delBtn.setAttribute('aria-label', `Șterge participantul ${p.name}`);
-    delBtn.innerHTML = TRASH_ICON;
     delBtn.addEventListener('click', () =>
       confirmDelete(`Ștergi participantul ${p.name}?`, () => deleteParticipant(p.id))
     );
@@ -364,9 +359,6 @@ async function deleteParticipant(id) {
 }
 
 // ---------- Announcements section ----------
-const MEGAPHONE_ICON =
-  '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11v2a2 2 0 0 0 2 2h1l10 4V5L6 9H5a2 2 0 0 0-2 2Z"/><path d="M16 9.5a3 3 0 0 1 0 5"/></svg>';
-
 function relativeTime(dateStr) {
   const diffMin = Math.round((Date.now() - new Date(dateStr).getTime()) / 60000);
   if (diffMin < 1) return 'chiar acum';
@@ -396,12 +388,13 @@ function renderAnnouncements(list) {
 
     const head = document.createElement('div');
     head.className = 'announcement-head';
-    const icon = document.createElement('span');
-    icon.className = 'announcement-icon';
-    icon.innerHTML = MEGAPHONE_ICON;
+    const tag = document.createElement('span');
+    tag.className = 'announcement-tag';
+    tag.setAttribute('aria-hidden', 'true');
+    tag.textContent = '#anunț';
     const h3 = document.createElement('h3');
     h3.textContent = a.title;
-    head.append(icon, h3);
+    head.append(tag, h3);
 
     const small = document.createElement('small');
     small.textContent = relativeTime(a.updatedAt);
@@ -416,13 +409,13 @@ function renderAnnouncements(list) {
       const editBtn = document.createElement('button');
       editBtn.type = 'button';
       editBtn.className = 'btn-ghost';
-      editBtn.textContent = 'Editează';
+      editBtn.textContent = 'editează';
       editBtn.addEventListener('click', () => openEditAnnouncement(a));
 
       const delBtn = document.createElement('button');
       delBtn.type = 'button';
       delBtn.className = 'danger';
-      delBtn.textContent = 'Șterge';
+      delBtn.textContent = 'șterge';
       delBtn.addEventListener('click', () =>
         confirmDelete(`Ștergi anunțul "${a.title}"?`, () => deleteAnnouncement(a.id))
       );

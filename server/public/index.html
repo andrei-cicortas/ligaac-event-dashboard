@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LigaAC Event Dashboard</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23b9222b'/%3E%3Ctext x='16' y='22' font-family='Arial,sans-serif' font-weight='700' font-size='16' fill='white' text-anchor='middle'%3EAC%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0a0a'/%3E%3Crect x='1' y='1' width='30' height='30' fill='none' stroke='%23b9222b' stroke-width='2'/%3E%3Ctext x='16' y='21' font-family='monospace' font-weight='700' font-size='13' fill='%23b9222b' text-anchor='middle'%3EAC%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -15,113 +15,112 @@
 
   <header>
     <div class="brand">
-      <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" class="icon"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="currentColor" stroke="none"/></svg>
-      </span>
+      <span class="brand-mark" aria-hidden="true">AC</span>
       <span class="brand-text">
         <strong>LigaAC</strong>
-        <small>Departamentul Tehnic</small>
+        <small>departamentul_tehnic/</small>
       </span>
     </div>
     <nav>
-      <a href="#info">Eveniment</a>
-      <a href="#participants">Participanți</a>
-      <a href="#announcements">Anunțuri</a>
+      <a href="#info">eveniment</a>
+      <a href="#participants">participanți</a>
+      <a href="#announcements">anunțuri</a>
       <button id="theme-toggle" type="button" aria-label="Comută tema închisă/deschisă">
         <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke-linecap="round"/></svg>
         <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
       </button>
-      <button id="organizer-toggle" type="button">Login organizator</button>
+      <button id="organizer-toggle" type="button">login_organizator</button>
     </nav>
   </header>
 
   <main id="main-content" tabindex="-1">
     <div id="load-error" class="banner banner-error" role="alert" hidden>
       <p>Nu am putut încărca datele evenimentului. Verifică conexiunea și încearcă din nou.</p>
-      <button id="retry-load-btn" type="button">Reîncearcă</button>
+      <button id="retry-load-btn" type="button">reîncearcă</button>
     </div>
 
     <section id="info" class="hero" aria-labelledby="event-name">
-      <div class="hero-glow" aria-hidden="true"></div>
-      <p class="eyebrow">Liga AC · Eveniment</p>
-      <h1 id="event-name">Se încarcă...</h1>
-      <p id="event-description" class="hero-description">—</p>
-
-      <dl class="meta-chips">
-        <div class="meta-chip">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4" stroke-linecap="round"/></svg>
-          <dt class="sr-only">Data</dt>
-          <dd><time id="event-date"></time></dd>
-        </div>
-        <div class="meta-chip">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.4"/></svg>
-          <dt class="sr-only">Locație</dt>
-          <dd id="event-location"></dd>
-        </div>
-        <div class="meta-chip">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 2.9-6.2 6.5-6.2s6.5 2.6 6.5 6.2M16.5 5.2A3.2 3.2 0 0 1 17 11.5M21.5 20c0-2.9-1.8-5.2-4.5-6" stroke-linecap="round"/></svg>
-          <dt class="sr-only">Participanți înscriși</dt>
-          <dd><span id="participant-count">0</span> înscriși</dd>
-        </div>
-      </dl>
-
-      <div class="countdown" aria-hidden="true">
-        <div class="countdown-box"><span class="countdown-value" id="cd-days">00</span><span class="countdown-label">Zile</span></div>
-        <span class="countdown-sep">:</span>
-        <div class="countdown-box"><span class="countdown-value" id="cd-hours">00</span><span class="countdown-label">Ore</span></div>
-        <span class="countdown-sep">:</span>
-        <div class="countdown-box"><span class="countdown-value" id="cd-min">00</span><span class="countdown-label">Min</span></div>
-        <span class="countdown-sep">:</span>
-        <div class="countdown-box"><span class="countdown-value" id="cd-sec">00</span><span class="countdown-label">Sec</span></div>
+      <div class="term-bar">
+        <span class="term-dot term-dot-a"></span>
+        <span class="term-dot term-dot-b"></span>
+        <span class="term-dot term-dot-c"></span>
+        <span class="term-path">ligaac@events:~$ cat eveniment.json</span>
       </div>
-      <p class="sr-only"><time id="countdown">—</time></p>
+      <div class="hero-body">
+        <p class="eyebrow">// liga ac · eveniment</p>
+        <h1 id="event-name">Se încarcă...</h1>
+        <p id="event-description" class="hero-description">—</p>
 
-      <button id="edit-event-btn" type="button" class="btn-ghost organizer-only" hidden>
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3Z"/></svg>
-        Editează evenimentul
-      </button>
+        <dl class="meta-list">
+          <div class="meta-row">
+            <span class="meta-key">data</span>
+            <dt class="sr-only">Data</dt>
+            <dd><time id="event-date"></time></dd>
+          </div>
+          <div class="meta-row">
+            <span class="meta-key">locatie</span>
+            <dt class="sr-only">Locație</dt>
+            <dd id="event-location"></dd>
+          </div>
+          <div class="meta-row">
+            <span class="meta-key">participanti</span>
+            <dt class="sr-only">Participanți înscriși</dt>
+            <dd><span id="participant-count">0</span></dd>
+          </div>
+        </dl>
+
+        <div class="countdown" aria-hidden="true">
+          <div class="countdown-box"><span class="countdown-value" id="cd-days">00</span><span class="countdown-label">zile</span></div>
+          <span class="countdown-sep">:</span>
+          <div class="countdown-box"><span class="countdown-value" id="cd-hours">00</span><span class="countdown-label">ore</span></div>
+          <span class="countdown-sep">:</span>
+          <div class="countdown-box"><span class="countdown-value" id="cd-min">00</span><span class="countdown-label">min</span></div>
+          <span class="countdown-sep">:</span>
+          <div class="countdown-box"><span class="countdown-value" id="cd-sec">00</span><span class="countdown-label">sec</span></div>
+        </div>
+        <p class="sr-only"><time id="countdown">—</time></p>
+
+        <button id="edit-event-btn" type="button" class="btn-ghost organizer-only" hidden>$ editează-eveniment</button>
+      </div>
     </section>
 
     <section id="participants" aria-labelledby="participants-heading">
-      <h2 id="participants-heading">
-        <svg class="icon section-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 2.9-6.2 6.5-6.2s6.5 2.6 6.5 6.2M16.5 5.2A3.2 3.2 0 0 1 17 11.5M21.5 20c0-2.9-1.8-5.2-4.5-6" stroke-linecap="round"/></svg>
-        Participanți
-      </h2>
+      <h2 id="participants-heading"><span class="prompt" aria-hidden="true">&gt;</span> participanți</h2>
       <form id="register-form">
-        <label for="reg-name">Nume</label>
+        <label for="reg-name">nume</label>
         <input id="reg-name" name="name" type="text" required />
 
-        <label for="reg-email">Email</label>
+        <label for="reg-email">email</label>
         <input id="reg-email" name="email" type="email" required />
 
-        <label for="reg-team">Echipă (opțional)</label>
+        <label for="reg-team">echipă (opțional)</label>
         <input id="reg-team" name="team" type="text" />
 
-        <label for="reg-role">Rol (opțional)</label>
+        <label for="reg-role">rol (opțional)</label>
         <select id="reg-role" name="role">
-          <option value="">Alege un rol</option>
+          <option value="">alege un rol</option>
           <option value="Jucător">Jucător</option>
           <option value="Voluntar">Voluntar</option>
           <option value="Spectator">Spectator</option>
         </select>
 
-        <button type="submit" class="btn-primary">Înscrie-te</button>
+        <button type="submit" class="btn-primary">$ înscrie-te</button>
       </form>
 
       <div class="table-scroll">
         <table id="participants-table">
           <thead>
             <tr>
-              <th scope="col">Nume</th>
-              <th scope="col">Email</th>
-              <th scope="col">Echipă</th>
-              <th scope="col">Rol</th>
-              <th scope="col" class="organizer-only" hidden>Acțiuni</th>
+              <th scope="col">nume</th>
+              <th scope="col">email</th>
+              <th scope="col">echipă</th>
+              <th scope="col">rol</th>
+              <th scope="col" class="organizer-only" hidden>acțiuni</th>
             </tr>
           </thead>
           <tbody id="participants-body">
             <tr class="state-row">
-              <td colspan="5">Se încarcă participanții…</td>
+              <td colspan="5">se încarcă participanții…</td>
             </tr>
           </tbody>
         </table>
@@ -129,103 +128,100 @@
     </section>
 
     <section id="announcements" aria-labelledby="announcements-heading">
-      <h2 id="announcements-heading">
-        <svg class="icon section-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11v2a2 2 0 0 0 2 2h1l10 4V5L6 9H5a2 2 0 0 0-2 2Z"/><path d="M16 9.5a3 3 0 0 1 0 5"/></svg>
-        Anunțuri
-      </h2>
+      <h2 id="announcements-heading"><span class="prompt" aria-hidden="true">&gt;</span> anunțuri</h2>
       <form id="announcement-form" class="organizer-only" hidden>
-        <label for="ann-title">Titlu</label>
+        <label for="ann-title">titlu</label>
         <input id="ann-title" name="title" type="text" required />
 
-        <label for="ann-content">Conținut</label>
+        <label for="ann-content">conținut</label>
         <textarea id="ann-content" name="content" required></textarea>
 
-        <button type="submit" class="btn-primary">Publică anunț</button>
+        <button type="submit" class="btn-primary">$ publică</button>
       </form>
       <ul id="announcements-list">
-        <li class="state-row">Se încarcă anunțurile…</li>
+        <li class="state-row">se încarcă anunțurile…</li>
       </ul>
     </section>
   </main>
 
   <dialog id="organizer-dialog" aria-labelledby="organizer-dialog-title">
     <form id="organizer-form">
-      <h2 id="organizer-dialog-title">Login organizator</h2>
-      <label for="organizer-key">Cheie organizator</label>
+      <h2 id="organizer-dialog-title"><span class="prompt" aria-hidden="true">&gt;</span> login organizator</h2>
+      <label for="organizer-key">cheie organizator</label>
       <input id="organizer-key" type="password" required />
-      <button type="submit" class="btn-primary">Intră</button>
-      <button type="button" class="btn-ghost" data-close="organizer-dialog">Anulează</button>
+      <button type="submit" class="btn-primary">$ intră</button>
+      <button type="button" class="btn-ghost" data-close="organizer-dialog">anulează</button>
     </form>
   </dialog>
 
   <dialog id="edit-event-dialog" aria-labelledby="edit-event-dialog-title">
     <form id="edit-event-form">
-      <h2 id="edit-event-dialog-title">Editează evenimentul</h2>
-      <label for="edit-event-name">Nume</label>
+      <h2 id="edit-event-dialog-title"><span class="prompt" aria-hidden="true">&gt;</span> editează evenimentul</h2>
+      <label for="edit-event-name">nume</label>
       <input id="edit-event-name" type="text" required />
 
-      <label for="edit-event-date">Dată și oră</label>
+      <label for="edit-event-date">dată și oră</label>
       <input id="edit-event-date" type="datetime-local" required />
 
-      <label for="edit-event-location">Locație</label>
+      <label for="edit-event-location">locație</label>
       <input id="edit-event-location" type="text" required />
 
-      <label for="edit-event-description">Descriere</label>
+      <label for="edit-event-description">descriere</label>
       <textarea id="edit-event-description" required></textarea>
 
-      <button type="submit" class="btn-primary">Salvează</button>
-      <button type="button" class="btn-ghost" data-close="edit-event-dialog">Anulează</button>
+      <button type="submit" class="btn-primary">$ salvează</button>
+      <button type="button" class="btn-ghost" data-close="edit-event-dialog">anulează</button>
     </form>
   </dialog>
 
   <dialog id="edit-participant-dialog" aria-labelledby="edit-participant-dialog-title">
     <form id="edit-participant-form">
-      <h2 id="edit-participant-dialog-title">Editează participant</h2>
+      <h2 id="edit-participant-dialog-title"><span class="prompt" aria-hidden="true">&gt;</span> editează participant</h2>
       <input type="hidden" id="edit-participant-id" />
 
-      <label for="edit-participant-name">Nume</label>
+      <label for="edit-participant-name">nume</label>
       <input id="edit-participant-name" type="text" required />
 
-      <label for="edit-participant-email">Email</label>
+      <label for="edit-participant-email">email</label>
       <input id="edit-participant-email" type="email" required />
 
-      <label for="edit-participant-team">Echipă</label>
+      <label for="edit-participant-team">echipă</label>
       <input id="edit-participant-team" type="text" />
 
-      <label for="edit-participant-role">Rol</label>
+      <label for="edit-participant-role">rol</label>
       <input id="edit-participant-role" type="text" />
 
-      <button type="submit" class="btn-primary">Salvează</button>
-      <button type="button" class="btn-ghost" data-close="edit-participant-dialog">Anulează</button>
+      <button type="submit" class="btn-primary">$ salvează</button>
+      <button type="button" class="btn-ghost" data-close="edit-participant-dialog">anulează</button>
     </form>
   </dialog>
 
   <dialog id="edit-announcement-dialog" aria-labelledby="edit-announcement-dialog-title">
     <form id="edit-announcement-form">
-      <h2 id="edit-announcement-dialog-title">Editează anunț</h2>
+      <h2 id="edit-announcement-dialog-title"><span class="prompt" aria-hidden="true">&gt;</span> editează anunț</h2>
       <input type="hidden" id="edit-announcement-id" />
 
-      <label for="edit-announcement-title">Titlu</label>
+      <label for="edit-announcement-title">titlu</label>
       <input id="edit-announcement-title" type="text" required />
 
-      <label for="edit-announcement-content">Conținut</label>
+      <label for="edit-announcement-content">conținut</label>
       <textarea id="edit-announcement-content" required></textarea>
 
-      <button type="submit" class="btn-primary">Salvează</button>
-      <button type="button" class="btn-ghost" data-close="edit-announcement-dialog">Anulează</button>
+      <button type="submit" class="btn-primary">$ salvează</button>
+      <button type="button" class="btn-ghost" data-close="edit-announcement-dialog">anulează</button>
     </form>
   </dialog>
 
   <dialog id="confirm-dialog" aria-labelledby="confirm-message">
     <p id="confirm-message">Ești sigur?</p>
-    <button id="confirm-yes" type="button" class="danger">Da, șterge</button>
-    <button id="confirm-no" type="button" class="btn-ghost" data-close="confirm-dialog">Anulează</button>
+    <button id="confirm-yes" type="button" class="danger">$ da, șterge</button>
+    <button id="confirm-no" type="button" class="btn-ghost" data-close="confirm-dialog">anulează</button>
   </dialog>
 
   <aside id="toast" role="status" aria-live="polite" hidden></aside>
 
   <footer>
-    <small>Construit pentru proba Departamentul Tehnic — Liga AC, 2026.</small>
+    <small>// construit pentru proba Departamentul Tehnic — Liga AC, 2026</small>
   </footer>
 
   <script src="js/app.js"></script>
