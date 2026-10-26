@@ -1,4 +1,4 @@
-## 🔗 Site live: _[se completează după deploy pe Render — vezi secțiunea Deploy]_
+## 🔗 Site live: https://ligaac-event-dashboard.onrender.com
 
 ## 🔑 Parolă organizator (editare/ștergere participanți, anunțuri, export, statistici): `ligaac-organizer-2026`
 *(buton „Acces echipă" din header → câmpul „Parolă"; câmpul „Email" e doar informativ)*
