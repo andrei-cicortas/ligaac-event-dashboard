@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: ligaac-event-dashboard
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ORGANIZER_KEY
+        value: ligaac-organizer-2026
