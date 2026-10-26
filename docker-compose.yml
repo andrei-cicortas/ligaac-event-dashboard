@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - ORGANIZER_KEY=${ORGANIZER_KEY:-ligaac-organizer-2026}
+    volumes:
+      - ./server/data:/app/data
+    restart: unless-stopped

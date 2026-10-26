@@ -1,0 +1,7 @@
+**/node_modules
+.git
+server/data/store.db
+server/data/store.db-wal
+server/data/store.db-shm
+server/data/store.db-journal
+*.log

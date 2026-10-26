@@ -230,15 +230,26 @@ function avatarColor(name) {
   return `hsl(${hue} 60% 42%)`;
 }
 
+const participantsState = {
+  q: '',
+  team: '',
+  role: '',
+  sortBy: 'registeredAt',
+  sortDir: 'desc',
+  page: 1,
+  pageSize: 10,
+  searchDebounce: null,
+};
+let allParticipantsCache = [];
+
 function renderParticipants(list) {
-  document.getElementById('participant-count').textContent = list.length;
   const tbody = document.getElementById('participants-body');
   tbody.innerHTML = '';
 
   if (list.length === 0) {
     const tr = document.createElement('tr');
     tr.className = 'state-row';
-    tr.innerHTML = '<td colspan="5">Niciun participant înscris încă.</td>';
+    tr.innerHTML = '<td colspan="6">Niciun participant găsit.</td>';
     tbody.appendChild(tr);
     return;
   }
@@ -255,6 +266,7 @@ function renderParticipants(list) {
       <td class="organizer-only" ${organizerKey ? '' : 'hidden'}>${escapeHtml(p.email)}</td>
       <td>${p.team ? `<span class="chip">${escapeHtml(p.team)}</span>` : '—'}</td>
       <td>${p.role ? `<span class="badge-role" data-role="${escapeHtml(p.role)}">${escapeHtml(p.role)}</span>` : '—'}</td>
+      <td>${escapeHtml(new Date(p.registeredAt).toLocaleDateString('ro-RO'))}</td>
     `;
 
     const actionsTd = document.createElement('td');
@@ -286,6 +298,161 @@ function renderParticipants(list) {
   }
 }
 
+function updateSortIndicators() {
+  document.querySelectorAll('#participants-table th.sortable').forEach((th) => {
+    if (th.dataset.sort === participantsState.sortBy) {
+      th.dataset.dir = participantsState.sortDir;
+    } else {
+      delete th.dataset.dir;
+    }
+  });
+}
+
+function renderPagination({ page, totalPages, total }) {
+  document.getElementById('participants-page-info').textContent =
+    total === 0 ? '0 rezultate' : `Pagina ${page} din ${totalPages} (${total} rezultate)`;
+  document.getElementById('participants-prev-btn').disabled = page <= 1;
+  document.getElementById('participants-next-btn').disabled = page >= totalPages;
+}
+
+function buildParticipantsFilterParams() {
+  const params = new URLSearchParams();
+  if (participantsState.q) params.set('q', participantsState.q);
+  if (participantsState.team) params.set('team', participantsState.team);
+  if (participantsState.role) params.set('role', participantsState.role);
+  params.set('sortBy', participantsState.sortBy);
+  params.set('sortDir', participantsState.sortDir);
+  return params;
+}
+
+async function loadParticipants() {
+  const params = buildParticipantsFilterParams();
+  params.set('page', participantsState.page);
+  params.set('pageSize', participantsState.pageSize);
+  try {
+    const data = await api(`/participants?${params.toString()}`);
+    renderParticipants(data.items);
+    renderPagination(data);
+    updateSortIndicators();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+// Separate, unfiltered fetch: feeds the "înscriși" count and the team-filter
+// dropdown's options, independent of the current search/filter/page.
+async function refreshParticipantsMeta() {
+  try {
+    allParticipantsCache = await api('/participants');
+    document.getElementById('participant-count').textContent = allParticipantsCache.length;
+
+    const teamSelect = document.getElementById('participants-team-filter');
+    const current = teamSelect.value;
+    const teams = [...new Set(allParticipantsCache.map((p) => p.team).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b)
+    );
+    teamSelect.innerHTML = '<option value="">Toate echipele</option>';
+    for (const team of teams) {
+      const opt = document.createElement('option');
+      opt.value = team;
+      opt.textContent = team;
+      teamSelect.appendChild(opt);
+    }
+    if (teams.includes(current)) {
+      teamSelect.value = current;
+    } else if (current) {
+      // The team filter's value disappeared (its last participant was
+      // removed/edited) — fall back to "all" so the dropdown and state agree.
+      participantsState.team = '';
+    }
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+async function refreshParticipants() {
+  await Promise.all([loadParticipants(), refreshParticipantsMeta()]);
+  if (organizerKey) loadStats();
+}
+
+document.getElementById('participants-search').addEventListener('input', (e) => {
+  clearTimeout(participantsState.searchDebounce);
+  participantsState.searchDebounce = setTimeout(() => {
+    participantsState.q = e.target.value;
+    participantsState.page = 1;
+    loadParticipants();
+  }, 300);
+});
+
+document.getElementById('participants-team-filter').addEventListener('change', (e) => {
+  participantsState.team = e.target.value;
+  participantsState.page = 1;
+  loadParticipants();
+});
+
+document.getElementById('participants-role-filter').addEventListener('change', (e) => {
+  participantsState.role = e.target.value;
+  participantsState.page = 1;
+  loadParticipants();
+});
+
+document.getElementById('participants-page-size').addEventListener('change', (e) => {
+  participantsState.pageSize = Number(e.target.value);
+  participantsState.page = 1;
+  loadParticipants();
+});
+
+document.getElementById('participants-prev-btn').addEventListener('click', () => {
+  if (participantsState.page > 1) {
+    participantsState.page -= 1;
+    loadParticipants();
+  }
+});
+
+document.getElementById('participants-next-btn').addEventListener('click', () => {
+  participantsState.page += 1;
+  loadParticipants();
+});
+
+document.querySelectorAll('#participants-table th.sortable').forEach((th) => {
+  th.addEventListener('click', () => {
+    const field = th.dataset.sort;
+    if (participantsState.sortBy === field) {
+      participantsState.sortDir = participantsState.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      participantsState.sortBy = field;
+      participantsState.sortDir = 'asc';
+    }
+    participantsState.page = 1;
+    loadParticipants();
+  });
+});
+
+document.getElementById('participants-export-btn').addEventListener('click', async () => {
+  try {
+    const params = buildParticipantsFilterParams();
+    const res = await fetch(`/api/participants/export?${params.toString()}`, {
+      headers: organizerKey ? { 'x-organizer-key': organizerKey } : {},
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error((data && data.error) || `Eroare ${res.status}`);
+    }
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = 'participanti.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(blobUrl);
+    showToast('Export CSV generat.');
+  } catch (err) {
+    showToast(err.message, true);
+  }
+});
+
 document.getElementById('register-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = e.target;
@@ -299,7 +466,7 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     await api('/participants', { method: 'POST', body: JSON.stringify(payload) });
     form.reset();
     showToast('Te-ai înscris cu succes!');
-    renderParticipants(await api('/participants'));
+    await refreshParticipants();
   } catch (err) {
     showToast(err.message, true);
   }
@@ -327,7 +494,7 @@ document.getElementById('edit-participant-form').addEventListener('submit', asyn
     await api(`/participants/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
     document.getElementById('edit-participant-dialog').close();
     showToast('Participant actualizat.');
-    renderParticipants(await api('/participants'));
+    await refreshParticipants();
   } catch (err) {
     showToast(err.message, true);
   }
@@ -337,7 +504,59 @@ async function deleteParticipant(id) {
   try {
     await api(`/participants/${id}`, { method: 'DELETE' });
     showToast('Participant șters.');
-    renderParticipants(await api('/participants'));
+    await refreshParticipants();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+// ---------- Stats panel (organizer-only) ----------
+function renderBarList(entries) {
+  if (!entries.length) return '<p class="state-row">Fără date.</p>';
+  const max = Math.max(...entries.map((e) => e.count), 1);
+  return entries
+    .map(
+      (e) => `
+        <div class="chart-row">
+          <span class="chart-label" title="${escapeHtml(e.label)}">${escapeHtml(e.label)}</span>
+          <span class="chart-bar-track">
+            <span class="chart-bar-fill" style="width:${((e.count / max) * 100).toFixed(1)}%"></span>
+          </span>
+          <span class="chart-count">${e.count}</span>
+        </div>`
+    )
+    .join('');
+}
+
+function renderStats(stats) {
+  const grid = document.getElementById('stats-grid');
+  const byDayEntries = stats.byDay.map((d) => ({ label: d.date, count: d.count }));
+
+  grid.innerHTML = `
+    <div class="stat-card">
+      <h3>Total participanți</h3>
+      <div class="stat-total">${stats.total}</div>
+    </div>
+    <div class="stat-card">
+      <h3>Înscrieri pe zi</h3>
+      ${renderBarList(byDayEntries)}
+    </div>
+    <div class="stat-card">
+      <h3>Distribuție pe rol</h3>
+      ${renderBarList(stats.byRole)}
+    </div>
+    <div class="stat-card">
+      <h3>Distribuție pe echipă</h3>
+      ${renderBarList(stats.byTeam)}
+    </div>
+  `;
+}
+
+async function loadStats() {
+  if (!organizerKey) return;
+  try {
+    const stats = await api('/participants/stats');
+    renderStats(stats);
   } catch (err) {
     showToast(err.message, true);
   }
@@ -370,6 +589,7 @@ function renderAnnouncements(list) {
   for (const a of list) {
     const li = document.createElement('li');
     const article = document.createElement('article');
+    article.classList.toggle('pinned', Boolean(a.pinned));
 
     const head = document.createElement('div');
     head.className = 'announcement-head';
@@ -380,6 +600,12 @@ function renderAnnouncements(list) {
     const h3 = document.createElement('h3');
     h3.textContent = a.title;
     head.append(tag, h3);
+    if (a.pinned) {
+      const badge = document.createElement('span');
+      badge.className = 'pin-badge';
+      badge.textContent = '📌 Fixat';
+      head.appendChild(badge);
+    }
 
     const small = document.createElement('small');
     small.textContent = relativeTime(a.updatedAt);
@@ -391,6 +617,12 @@ function renderAnnouncements(list) {
     article.append(head, small, p);
 
     if (organizerKey) {
+      const pinBtn = document.createElement('button');
+      pinBtn.type = 'button';
+      pinBtn.className = 'btn-ghost';
+      pinBtn.textContent = a.pinned ? 'Anulează fixarea' : 'Fixează';
+      pinBtn.addEventListener('click', () => togglePin(a));
+
       const editBtn = document.createElement('button');
       editBtn.type = 'button';
       editBtn.className = 'btn-ghost';
@@ -407,12 +639,25 @@ function renderAnnouncements(list) {
 
       const actionsWrap = document.createElement('div');
       actionsWrap.className = 'announcement-actions';
-      actionsWrap.append(editBtn, delBtn);
+      actionsWrap.append(pinBtn, editBtn, delBtn);
       article.appendChild(actionsWrap);
     }
 
     li.appendChild(article);
     ul.appendChild(li);
+  }
+}
+
+async function togglePin(a) {
+  try {
+    await api(`/announcements/${a.id}/pin`, {
+      method: 'PUT',
+      body: JSON.stringify({ pinned: !a.pinned }),
+    });
+    showToast(a.pinned ? 'Anunț anulat din fixare.' : 'Anunț fixat.');
+    renderAnnouncements(await api('/announcements'));
+  } catch (err) {
+    showToast(err.message, true);
   }
 }
 
@@ -531,6 +776,40 @@ document.getElementById('organizer-form').addEventListener('submit', async (e) =
   }
 });
 
+// ---------- Live updates (SSE) ----------
+// Browser tabs subscribe via EventSource and refetch whichever resource
+// changed, instead of polling. EventSource reconnects on its own if the
+// connection drops — onopen/onerror just drive the header's status pill.
+function setLiveStatus(connected) {
+  document.getElementById('live-pill').classList.toggle('is-connected', connected);
+}
+
+function initLiveUpdates() {
+  const source = new EventSource('/api/stream');
+
+  source.addEventListener('open', () => setLiveStatus(true));
+  source.addEventListener('error', () => setLiveStatus(false));
+  source.addEventListener('update', async (e) => {
+    let type;
+    try {
+      type = JSON.parse(e.data).type;
+    } catch {
+      return;
+    }
+    try {
+      if (type === 'event') {
+        renderEvent(await api('/event'));
+      } else if (type === 'participants') {
+        await refreshParticipants();
+      } else if (type === 'announcements') {
+        renderAnnouncements(await api('/announcements'));
+      }
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
+}
+
 // ---------- Init ----------
 document.getElementById('retry-load-btn').addEventListener('click', () => loadAll());
 
@@ -540,14 +819,10 @@ async function loadAll() {
   document.body.classList.add('is-loading');
 
   try {
-    const [event, participants, announcements] = await Promise.all([
-      api('/event'),
-      api('/participants'),
-      api('/announcements'),
-    ]);
+    const [event, announcements] = await Promise.all([api('/event'), api('/announcements')]);
     renderEvent(event);
-    renderParticipants(participants);
     renderAnnouncements(announcements);
+    await refreshParticipants();
   } catch (err) {
     errorBanner.hidden = false;
     showToast(err.message, true);
@@ -558,3 +833,4 @@ async function loadAll() {
 
 applyOrganizerVisibility();
 loadAll();
+initLiveUpdates();

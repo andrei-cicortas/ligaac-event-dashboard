@@ -1,7 +1,7 @@
-## 🔗 Site live: https://charming-curve-subjective-disco.trycloudflare.com
+## 🔗 Site live: _[se completează după deploy pe Render — vezi secțiunea Deploy]_
 
-## 🔑 Parolă organizator (editare/ștergere participanți, anunțuri): `ligaac-organizer-2026`
-*(buton „Acces echipă" din header → câmpul „Parolă")*
+## 🔑 Parolă organizator (editare/ștergere participanți, anunțuri, export, statistici): `ligaac-organizer-2026`
+*(buton „Acces echipă" din header → câmpul „Parolă"; câmpul „Email" e doar informativ)*
 
 ---
 
@@ -9,14 +9,24 @@
 
 Proba tehnică — aria **Software Development** — pentru departamentul tehnic Liga AC.
 Aplicație web pentru managementul și afișarea unui eveniment organizat de ligă (am ales un
-LAN party): pagină publică + API care o deservește.
+LAN party): pagină publică + API care o deservește, cu actualizări live între taburi.
+
+## 🖼️ Cum arată site-ul (fără să-l instalați)
+
+![Pagina principală](docs/homepage.jpg)
+
+![Demo: login organizator + gestionare participanți/anunțuri](docs/demo.gif)
 
 ## Pe scurt
 
-- 🔗 **Site live, fără instalare**: vezi linkul de sus *(temporar — dacă nu mai merge,
-  porniți-l local cu pașii de mai jos)*
+- 🔗 **Site live**: vezi linkul de sus. Rulează pe Render, plan gratuit — fără disk persistent,
+  deci înregistrările noi de participanți/anunțuri se resetează la datele seed ori de câte ori
+  instanța "adoarme" din inactivitate și repornește (vezi secțiunea Deploy).
 - 💻 **Pornire locală**: `cd server && npm install && npm start`, apoi deschideți `http://localhost:3000`
 - 🔑 **Acces organizator**: vezi parola de sus
+- 🔴 **Live**: pastila "Live" din header confirmă conexiunea SSE — orice modificare făcută
+  într-un tab (înscriere, editare, fixare anunț) apare instant în toate celelalte taburi
+  deschise, fără refresh.
 
 Detaliile tehnice (arhitectură, structură cod, API, ce aș adăuga pentru producție) sunt mai
 jos, pentru cine vrea să vadă și raționamentul din spate.
@@ -35,10 +45,16 @@ semnalez asta aici decât să bag o cifră inventată într-un livrabil.
 ## Arhitectură și justificare tehnologii
 
 - **Backend**: Node.js + Express (ESM), API REST simplu, fără framework ORM.
-- **Persistență**: fișier JSON (`server/data/store.json`), citit/scris atomic (write la
-  `.tmp` + `rename`). Pentru volumul și scopul probei (un eveniment, câțiva participanți,
-  câteva anunțuri) o bază de date reală ar fi fost overengineering; interfața de acces
-  (`db.js`) e izolată, deci e trivial de înlocuit cu SQLite/Postgres dacă proiectul crește.
+- **Persistență**: SQLite via `node:sqlite` (modulul nativ din Node, fără dependențe
+  compilate). La primul boot, dacă `store.db` e gol, se face o migrare automată din
+  `server/data/store.json` (seed-ul comis în git), ca să nu se piardă datele inițiale la
+  schimbarea backend-ului de persistență. Interfața de acces (`db.js`, `readStore`/
+  `writeStore`) e izolată de rute, deci e trivial de înlocuit cu Postgres dacă proiectul
+  crește. *(Pe deploy-ul gratuit de pe Render, disk-ul e efemer — vezi secțiunea Deploy.)*
+- **Actualizări live (SSE)**: `/api/stream` ține o conexiune `EventSource` deschisă per tab;
+  orice scriere reușită (înscriere, editare, ștergere, fixare anunț) emite un eveniment prin
+  `events.js`, iar toate taburile deschise refac automat fetch-ul pentru resursa afectată —
+  fără polling. Pastila "Live" din header reflectă starea conexiunii.
 - **Frontend**: HTML/CSS/JS vanilla, fără framework și fără build step — pornește direct cu
   `npm start`, ceea ce ține proba ușor de rulat și de citit. Liga folosește de obicei Angular
   pentru frontend; arhitectura de-aici (separare clară state/render/API calls în `app.js`,
@@ -56,30 +72,53 @@ semnalez asta aici decât să bag o cifră inventată într-un livrabil.
   din răspuns dacă request-ul nu vine cu o cheie de organizator validă (`redact()` în
   `routes/participants.js`) — nu doar UI-ul ascunde emailurile, ci chiar API-ul, ca să nu
   poată fi extrase direct din răspunsul JSON.
+- **Rate limiting**: `POST /api/participants` (formularul public de înscriere) e protejat de
+  un token-bucket per IP (`middleware/rateLimit.js`), ca să nu poată fi spamat.
+- **Logging**: fiecare acțiune pe o rută de organizator e logată structurat (JSON pe linie,
+  `logger.js`) — cine, ce rută, autorizat sau nu.
+- **Participanți — căutare/filtrare/sortare/paginare/export/statistici**: `GET
+  /api/participants` acceptă `q`/`team`/`role`/`sortBy`/`sortDir`/`page`/`pageSize`;
+  `GET /api/participants/export` generează un CSV (organizator), `GET /api/participants/stats`
+  întoarce un panou de statistici (total, înscrieri pe zi, distribuție pe rol/echipă).
+- **Anunțuri fixate**: organizatorul poate "fixa" un anunț (`PUT
+  /api/announcements/:id/pin`) ca să apară mereu primul, indiferent de dată.
+- **Teste automate**: `node --test` (`server/test/`) acoperă toate rutele — happy path,
+  validări 400, autorizare 401, 404, conflict 409, rate limiting 429 — plus un test de
+  round-trip direct pe stratul SQLite.
+- **Docker**: `Dockerfile` + `docker-compose.yml` la rădăcina proiectului, cu volum pe
+  `server/data` ca `store.db` să supraviețuiască recreării containerului.
 
 ## Structură
 
 ```
 LigaAC/
   README.md
+  render.yaml          # blueprint Render (deploy cu un click)
+  Dockerfile
+  docker-compose.yml
   server/
     package.json
     data/
-      store.json          # "baza de date" (JSON)
+      store.json          # seed, migrat automat în SQLite la primul boot
+    test/                 # node --test
     src/
-      server.js           # bootstrap Express + servire fișiere statice din public/
-      db.js                # citire/scriere store.json
+      server.js           # pornește createApp().listen(...)
+      app.js               # construiește app-ul Express (rute, SSE, static) — testabil fără listen()
+      db.js                # SQLite (node:sqlite) în spatele readStore/writeStore
+      events.js            # bus intern pentru live updates (SSE)
+      logger.js
       middleware/
         organizerAuth.js  # gate pentru rutele de organizator
+        rateLimit.js      # token-bucket pentru POST /api/participants
       routes/
         event.js
-        participants.js
-        announcements.js
+        participants.js   # + filtrare/sortare/paginare/export/stats
+        announcements.js  # + fixare (pin)
         organizer.js       # endpoint de verificare a cheii
     public/
       index.html
       css/styles.css
-      js/app.js             # tot JS-ul de client (fetch API, render, dialoguri)
+      js/app.js             # tot JS-ul de client (fetch API, render, dialoguri, SSE)
       img/
         logo.svg
         favicon.svg
@@ -87,7 +126,7 @@ LigaAC/
 
 ## Pornire
 
-Necesită Node.js 18+ (testat cu Node 24).
+Necesită Node.js **22.5+** (modulul nativ `node:sqlite`; testat cu Node 24).
 
 ```bash
 cd server
@@ -110,10 +149,12 @@ participanți și anunțuri, plus editarea evenimentului.
 1. **Pagina principală** — nume, dată, locație, descriere, numărul de participanți și un
    countdown live (actualizat la fiecare secundă via `setInterval`).
 2. **Înregistrare participanți** — formular public (nume, email, echipă/rol opționale);
-   organizatorul poate edita sau șterge orice înregistrare (protejat de cheie).
-3. **Panou de anunțuri** — organizatorul poate crea, edita și șterge anunțuri; afișate
-   public, sortate descrescător după data ultimei actualizări.
-4. **API REST** — vezi tabelul de mai jos.
+   căutare/filtrare (echipă, rol)/sortare/paginare; organizatorul poate edita sau șterge orice
+   înregistrare, exporta lista ca CSV și vedea un panou de statistici.
+3. **Panou de anunțuri** — organizatorul poate crea, edita, șterge și fixa ("pin") anunțuri;
+   afișate public, cele fixate primele, apoi descrescător după data ultimei actualizări.
+4. **Actualizări live** — orice modificare apare instant în toate taburile deschise, via SSE.
+5. **API REST** — vezi tabelul de mai jos.
 
 ### Cerințe DOM
 
@@ -138,34 +179,52 @@ Toate răspunsurile sunt JSON. Rutele de scriere marcate "organizator" cer heade
 |--------|---------------------------|------------|-----------------------------------------|
 | GET    | `/api/event`               | public     | Detaliile evenimentului                 |
 | PUT    | `/api/event`                | organizator| Actualizează evenimentul                |
-| GET    | `/api/participants`         | public     | Lista participanților (email ascuns fără cheie de organizator) |
-| POST   | `/api/participants`         | public     | Înregistrare participant nou            |
+| GET    | `/api/participants`         | public     | Lista participanților (email ascuns fără cheie de organizator); acceptă `q`/`team`/`role`/`sortBy`/`sortDir`/`page`/`pageSize` |
+| POST   | `/api/participants`         | public     | Înregistrare participant nou (rate-limited)|
+| GET    | `/api/participants/export`  | organizator| Export CSV (respectă filtrele din query)|
+| GET    | `/api/participants/stats`   | organizator| Statistici (total, pe zi, pe rol, pe echipă) |
 | PUT    | `/api/participants/:id`     | organizator| Editează un participant                 |
 | DELETE | `/api/participants/:id`     | organizator| Șterge un participant                   |
-| GET    | `/api/announcements`        | public     | Lista anunțurilor (cele mai noi primele)|
+| GET    | `/api/announcements`        | public     | Lista anunțurilor (fixate primele, apoi cele mai noi) |
 | POST   | `/api/announcements`        | organizator| Creează un anunț                        |
 | PUT    | `/api/announcements/:id`    | organizator| Editează un anunț                       |
+| PUT    | `/api/announcements/:id/pin`| organizator| Fixează/anulează fixarea unui anunț     |
 | DELETE | `/api/announcements/:id`    | organizator| Șterge un anunț                         |
 | POST   | `/api/organizer/verify`     | public     | Verifică o cheie fără a o expune        |
+| GET    | `/api/stream`                | public     | Flux SSE (`event: update`, `{ type }`) pentru actualizări live |
 
 Validări server-side: nume/email obligatorii la participanți (regex email + unicitate pe
 email), titlu/conținut obligatorii la anunțuri, date valide (ISO 8601) la editarea
 evenimentului. Coduri de răspuns: `201` creare, `200` citire/editare, `204` ștergere, `400`
 validare, `401` lipsă/greșită autorizare, `404` resursă inexistentă, `409` email duplicat.
 
-## Ce aș adăuga pentru producție
+## Deploy
 
-- Autentificare reală (sesiuni/JWT, useri cu roluri) în locul cheii statice.
-- Bază de date reală (SQLite/Postgres) dacă numărul de evenimente/participanți crește.
-- Teste automate (în proba asta am testat manual toate fluxurile — vezi mai jos).
-- Rate limiting pe `/api/participants` (POST) ca să nu poată fi spamat formularul public.
+Site-ul e gândit pentru găzduire gratuită pe [Render](https://render.com), via blueprint-ul
+`render.yaml` din rădăcina proiectului:
 
-## Testare manuală efectuată
+1. Push pe un repo GitHub (public sau privat).
+2. Pe Render: **New → Blueprint**, selectați repo-ul — `render.yaml` configurează automat
+   serviciul (`rootDir: server`, `npm install`, `npm start`).
+3. Setați variabila `ORGANIZER_KEY` în dashboard-ul Render (nu e comisă în git).
+
+**Limitare cunoscută a planului gratuit**: Render free nu oferă disk persistent — orice
+scriere pe disc (inclusiv baza SQLite) se pierde la fiecare redeploy sau la "adormirea" din
+inactivitate (instanța repornește la următoarea cerere, ~15 min de inactivitate). Practic:
+site-ul e mereu disponibil și complet funcțional (înscriere, editare, anunțuri, export,
+statistici), dar înregistrările noi nu sunt garantat permanente — la fiecare repornire,
+aplicația re-seedează automat din `server/data/store.json`. Pentru persistență reală, fie se
+plătește un disk Render, fie se înlocuiește `db.js` cu o bază externă (ex. Turso/Supabase).
+
+## Testare efectuată
 
 Am rulat serverul local și am verificat prin `curl` + browser (Chrome, prin unealta de
 automatizare): încărcarea paginii cu toate datele seed, countdown-ul live, înregistrare
 participant nou (apare instant în tabel + toast de succes), login organizator (cheie greșită
-respinsă, cheie corectă acceptă și dezvăluie controalele), editare/ștergere participant cu
-dialog de confirmare, validări (email invalid → 400, email duplicat → 409, lipsă cheie pe
-rute protejate → 401), și am confirmat că dialogurile se centrează corect pe ecran și că nu
-apar erori în consola browserului.
+respinsă, cheie corectă acceptă și dezvăluie controalele, câmp email), editare/ștergere
+participant cu dialog de confirmare, căutare/filtrare/sortare/paginare participanți, export
+CSV, panoul de statistici, fixarea/anularea fixării unui anunț, validări (email invalid → 400,
+email duplicat → 409, lipsă cheie pe rute protejate → 401), actualizări live între două taburi
+deschise simultan (fixare anunț într-un tab, reflectată instant în celălalt, fără refresh), și
+am confirmat că dialogurile se centrează corect pe ecran și că nu apar erori în consola
+browserului. Suita automată (`npm test` în `server/`) acoperă toate rutele API.

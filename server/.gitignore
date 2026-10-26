@@ -1,1 +1,9 @@
 node_modules/
+
+# Generated at runtime (seeded from data/store.json on first boot) — not
+# committed, since it's a binary file that would otherwise produce noisy
+# diffs. See README for the migration rationale.
+data/store.db
+data/store.db-wal
+data/store.db-shm
+data/store.db-journal

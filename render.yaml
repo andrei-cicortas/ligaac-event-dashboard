@@ -8,4 +8,4 @@ services:
     startCommand: npm start
     envVars:
       - key: ORGANIZER_KEY
-        value: ligaac-organizer-2026
+        sync: false

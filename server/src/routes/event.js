@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { readStore, writeStore } from '../db.js';
 import { requireOrganizer } from '../middleware/organizerAuth.js';
+import { emitUpdate } from '../events.js';
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.put('/', requireOrganizer, (req, res) => {
   const store = readStore();
   store.event = { name, date, location, description };
   writeStore(store);
+  emitUpdate('event');
   res.json(store.event);
 });
 

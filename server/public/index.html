@@ -21,6 +21,10 @@
       <a href="#info">Eveniment</a>
       <a href="#participants">Participanți</a>
       <a href="#announcements">Anunțuri</a>
+      <span id="live-pill" class="live-pill" title="Actualizări live prin SSE">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span class="live-pill-text">Live</span>
+      </span>
       <span class="organizer-badge organizer-only" hidden>Mod echipă activ</span>
       <button id="organizer-toggle" type="button" class="btn btn-pill btn-pill-dark">Acces echipă</button>
     </nav>
@@ -108,26 +112,78 @@
           </form>
 
           <div class="card table-card">
+            <div class="toolbar">
+              <div class="field field-grow">
+                <label for="participants-search">Caută (nume sau email)</label>
+                <input id="participants-search" type="search" placeholder="ex: Ana" />
+              </div>
+
+              <div class="field">
+                <label for="participants-team-filter">Echipă</label>
+                <select id="participants-team-filter">
+                  <option value="">Toate echipele</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="participants-role-filter">Rol</label>
+                <select id="participants-role-filter">
+                  <option value="">Toate rolurile</option>
+                  <option value="Jucător">Jucător</option>
+                  <option value="Voluntar">Voluntar</option>
+                  <option value="Spectator">Spectator</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="participants-page-size">Pe pagină</label>
+                <select id="participants-page-size">
+                  <option value="5">5</option>
+                  <option value="10" selected>10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+
+              <button id="participants-export-btn" type="button" class="btn btn-pill btn-pill-ghost organizer-only" hidden>
+                Export CSV
+              </button>
+            </div>
+
             <div class="table-scroll">
               <table id="participants-table">
                 <thead>
                   <tr>
-                    <th scope="col">Nume</th>
+                    <th scope="col" class="sortable" data-sort="name">Nume<span class="sort-indicator"></span></th>
                     <th scope="col" class="organizer-only" hidden>Email</th>
-                    <th scope="col">Echipă</th>
-                    <th scope="col">Rol</th>
+                    <th scope="col" class="sortable" data-sort="team">Echipă<span class="sort-indicator"></span></th>
+                    <th scope="col" class="sortable" data-sort="role">Rol<span class="sort-indicator"></span></th>
+                    <th scope="col" class="sortable" data-sort="registeredAt">Înscris la<span class="sort-indicator"></span></th>
                     <th scope="col" class="organizer-only" hidden>Acțiuni</th>
                   </tr>
                 </thead>
                 <tbody id="participants-body">
                   <tr class="state-row">
-                    <td colspan="5">Se încarcă participanții…</td>
+                    <td colspan="6">Se încarcă participanții…</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+
+            <div class="pagination">
+              <button id="participants-prev-btn" type="button" class="btn btn-pill btn-pill-ghost">‹ Anterior</button>
+              <span id="participants-page-info">—</span>
+              <button id="participants-next-btn" type="button" class="btn btn-pill btn-pill-ghost">Următor ›</button>
+            </div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section id="stats" class="organizer-only" hidden aria-labelledby="stats-heading">
+      <div class="section-inner">
+        <h2 id="stats-heading">Statistici organizator</h2>
+        <div id="stats-grid"></div>
       </div>
     </section>
 
