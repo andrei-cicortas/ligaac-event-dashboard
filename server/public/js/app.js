@@ -1,31 +1,8 @@
 const ORGANIZER_KEY_STORAGE = 'ligaac_organizer_key';
-const THEME_STORAGE = 'ligaac_theme';
 let organizerKey = sessionStorage.getItem(ORGANIZER_KEY_STORAGE) || null;
 let eventDate = null;
 let countdownInterval = null;
 let pendingConfirmAction = null;
-
-// ---------- Theme ----------
-function prefersDark() {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
-}
-
-function applyTheme(theme) {
-  if (theme === 'light' || theme === 'dark') {
-    document.documentElement.dataset.theme = theme;
-  } else {
-    delete document.documentElement.dataset.theme;
-  }
-}
-
-applyTheme(localStorage.getItem(THEME_STORAGE));
-
-document.getElementById('theme-toggle').addEventListener('click', () => {
-  const current = document.documentElement.dataset.theme || (prefersDark() ? 'dark' : 'light');
-  const next = current === 'dark' ? 'light' : 'dark';
-  applyTheme(next);
-  localStorage.setItem(THEME_STORAGE, next);
-});
 
 // ---------- API helper ----------
 async function api(path, options = {}) {
@@ -162,6 +139,11 @@ function renderEvent(event) {
   dateEl.dateTime = event.date;
   dateEl.textContent = d.toLocaleString('ro-RO', { dateStyle: 'full', timeStyle: 'short' });
 
+  document.getElementById('date-badge-day').textContent = d.getDate();
+  document.getElementById('date-badge-month').textContent = d
+    .toLocaleDateString('ro-RO', { month: 'short' })
+    .replace('.', '');
+
   eventDate = d;
   startCountdown();
 }
@@ -270,7 +252,7 @@ function renderParticipants(list) {
           <span>${escapeHtml(p.name)}</span>
         </div>
       </td>
-      <td>${escapeHtml(p.email)}</td>
+      <td class="organizer-only" ${organizerKey ? '' : 'hidden'}>${escapeHtml(p.email)}</td>
       <td>${p.team ? `<span class="chip">${escapeHtml(p.team)}</span>` : '—'}</td>
       <td>${p.role ? `<span class="badge-role" data-role="${escapeHtml(p.role)}">${escapeHtml(p.role)}</span>` : '—'}</td>
     `;
@@ -282,20 +264,23 @@ function renderParticipants(list) {
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
     editBtn.className = 'text-btn';
-    editBtn.textContent = 'edit';
+    editBtn.textContent = 'Edit';
     editBtn.setAttribute('aria-label', `Editează participantul ${p.name}`);
     editBtn.addEventListener('click', () => openEditParticipant(p));
 
     const delBtn = document.createElement('button');
     delBtn.type = 'button';
     delBtn.className = 'text-btn danger';
-    delBtn.textContent = 'del';
+    delBtn.textContent = 'Șterge';
     delBtn.setAttribute('aria-label', `Șterge participantul ${p.name}`);
     delBtn.addEventListener('click', () =>
       confirmDelete(`Ștergi participantul ${p.name}?`, () => deleteParticipant(p.id))
     );
 
-    actionsTd.append(editBtn, delBtn);
+    const actionsWrap = document.createElement('div');
+    actionsWrap.className = 'table-actions';
+    actionsWrap.append(editBtn, delBtn);
+    actionsTd.appendChild(actionsWrap);
     tr.appendChild(actionsTd);
     tbody.appendChild(tr);
   }
@@ -409,18 +394,21 @@ function renderAnnouncements(list) {
       const editBtn = document.createElement('button');
       editBtn.type = 'button';
       editBtn.className = 'btn-ghost';
-      editBtn.textContent = 'editează';
+      editBtn.textContent = 'Editează';
       editBtn.addEventListener('click', () => openEditAnnouncement(a));
 
       const delBtn = document.createElement('button');
       delBtn.type = 'button';
-      delBtn.className = 'danger';
-      delBtn.textContent = 'șterge';
+      delBtn.className = 'btn-ghost danger';
+      delBtn.textContent = 'Șterge';
       delBtn.addEventListener('click', () =>
         confirmDelete(`Ștergi anunțul "${a.title}"?`, () => deleteAnnouncement(a.id))
       );
 
-      article.append(editBtn, delBtn);
+      const actionsWrap = document.createElement('div');
+      actionsWrap.className = 'announcement-actions';
+      actionsWrap.append(editBtn, delBtn);
+      article.appendChild(actionsWrap);
     }
 
     li.appendChild(article);
@@ -506,8 +494,8 @@ function applyOrganizerVisibility() {
     el.hidden = !organizerKey;
   });
   document.getElementById('organizer-toggle').textContent = organizerKey
-    ? 'Delogare organizator'
-    : 'Login organizator';
+    ? 'Ieși din cont'
+    : 'Acces echipă';
 }
 
 document.getElementById('organizer-toggle').addEventListener('click', () => {
@@ -516,7 +504,7 @@ document.getElementById('organizer-toggle').addEventListener('click', () => {
     sessionStorage.removeItem(ORGANIZER_KEY_STORAGE);
     applyOrganizerVisibility();
     loadAll();
-    showToast('Delogat din modul organizator.');
+    showToast('Te-ai delogat din cont.');
   } else {
     openDialog(document.getElementById('organizer-dialog'));
   }
@@ -537,9 +525,9 @@ document.getElementById('organizer-form').addEventListener('submit', async (e) =
     document.getElementById('organizer-form').reset();
     applyOrganizerVisibility();
     loadAll();
-    showToast('Autentificat ca organizator.');
+    showToast('Autentificat ca echipă Liga AC.');
   } else {
-    showToast('Cheie invalidă.', true);
+    showToast('Email sau parolă greșite.', true);
   }
 });
 

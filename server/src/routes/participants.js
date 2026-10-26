@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import crypto from 'node:crypto';
 import { readStore, writeStore } from '../db.js';
-import { requireOrganizer } from '../middleware/organizerAuth.js';
+import { requireOrganizer, verifyOrganizerKey } from '../middleware/organizerAuth.js';
 
 const router = Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -13,9 +13,19 @@ function validate(body) {
   return null;
 }
 
+// Public callers never get participant emails — only a request carrying a
+// valid organizer key does. This is enforced here (not just hidden in the
+// UI) so the raw API response can't be used to scrape emails.
+function redact(p, includeEmail) {
+  if (includeEmail) return p;
+  const { email, ...rest } = p;
+  return rest;
+}
+
 router.get('/', (req, res) => {
   const { participants } = readStore();
-  res.json(participants);
+  const isOrganizer = verifyOrganizerKey(req.get('x-organizer-key'));
+  res.json(participants.map((p) => redact(p, isOrganizer)));
 });
 
 router.post('/', (req, res) => {

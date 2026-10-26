@@ -1,9 +1,27 @@
+## 🔗 Site live: https://charming-curve-subjective-disco.trycloudflare.com
+
+## 🔑 Parolă organizator (editare/ștergere participanți, anunțuri): `ligaac-organizer-2026`
+*(buton „Acces echipă" din header → câmpul „Parolă")*
+
+---
+
 # Dashboard pentru un eveniment Liga AC
 
 Proba tehnică — aria **Software Development** — pentru departamentul tehnic Liga AC.
-
 Aplicație web pentru managementul și afișarea unui eveniment organizat de ligă (am ales un
-LAN party), cu pagină publică + API care o deservește.
+LAN party): pagină publică + API care o deservește.
+
+## Pe scurt
+
+- 🔗 **Site live, fără instalare**: vezi linkul de sus *(temporar — dacă nu mai merge,
+  porniți-l local cu pașii de mai jos)*
+- 💻 **Pornire locală**: `cd server && npm install && npm start`, apoi deschideți `http://localhost:3000`
+- 🔑 **Acces organizator**: vezi parola de sus
+
+Detaliile tehnice (arhitectură, structură cod, API, ce aș adăuga pentru producție) sunt mai
+jos, pentru cine vrea să vadă și raționamentul din spate.
+
+---
 
 ## Nota despre textul ascuns din cerință
 
@@ -30,6 +48,14 @@ semnalez asta aici decât să bag o cifră inventată într-un livrabil.
   jos). E intenționat minimală — suficientă cât să demonstreze granița
   public/organizator cerută în temă, nu o soluție de producție. Pentru producție aș
   înlocui-o cu sesiuni/JWT și useri reali.
+- **Identitate vizuală**: interfața e construită pe o paletă fixă (nu temă light/dark
+  comutabilă) inspirată de brandul Liga AC — logo și favicon proprii în `public/img/`,
+  tokeni de culoare/spațiere în `styles.css`, stare de focus vizibilă pentru accesibilitate
+  pe navigare cu tastatura.
+- **Protecția emailurilor participanților**: `GET /api/participants` ascunde câmpul `email`
+  din răspuns dacă request-ul nu vine cu o cheie de organizator validă (`redact()` în
+  `routes/participants.js`) — nu doar UI-ul ascunde emailurile, ci chiar API-ul, ca să nu
+  poată fi extrase direct din răspunsul JSON.
 
 ## Structură
 
@@ -54,6 +80,9 @@ LigaAC/
       index.html
       css/styles.css
       js/app.js             # tot JS-ul de client (fetch API, render, dialoguri)
+      img/
+        logo.svg
+        favicon.svg
 ```
 
 ## Pornire
@@ -70,8 +99,10 @@ Aplicația pornește pe **http://localhost:3000** — backend-ul servește și f
 (fișierele din `public/`), deci nu există CORS de configurat, un singur proces de pornit.
 
 Cheia implicită de organizator este `ligaac-organizer-2026` (poate fi schimbată cu variabila
-de mediu `ORGANIZER_KEY` înainte de `npm start`). Se introduce din butonul **"Login
-organizator"** din header; după autentificare apar controalele de editare/ștergere pentru
+de mediu `ORGANIZER_KEY` înainte de `npm start`). Se introduce din butonul **"Acces
+echipă"** din header — în dialog, câmpul "Email" e doar informativ (nevalidat server-side),
+câmpul "Parolă" e cel care contează, acolo se pune cheia. După autentificare apar controalele
+de editare/ștergere pentru
 participanți și anunțuri, plus editarea evenimentului.
 
 ## Funcționalități implementate
@@ -107,7 +138,7 @@ Toate răspunsurile sunt JSON. Rutele de scriere marcate "organizator" cer heade
 |--------|---------------------------|------------|-----------------------------------------|
 | GET    | `/api/event`               | public     | Detaliile evenimentului                 |
 | PUT    | `/api/event`                | organizator| Actualizează evenimentul                |
-| GET    | `/api/participants`         | public     | Lista participanților                   |
+| GET    | `/api/participants`         | public     | Lista participanților (email ascuns fără cheie de organizator) |
 | POST   | `/api/participants`         | public     | Înregistrare participant nou            |
 | PUT    | `/api/participants/:id`     | organizator| Editează un participant                 |
 | DELETE | `/api/participants/:id`     | organizator| Șterge un participant                   |
